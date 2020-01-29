@@ -1,49 +1,54 @@
-interface bus (clk, reset);
-	input logic req, addr, cmd, wdata, ack, rdata
+interface if_bus (clk, reset);
+	logic 							req;		// master-> slave
+	logic [address_width-1:0	]	addr;		// master-> slave
+	logic 							cmd;		// master-> slave
+	logic [data_width-1:0		]	wdata;		// master-> slave
+	logic ack;									// slave-> master
+	logic [data_width-1:0		]	rdata;		// slave-> master
+	modport slave (	
+		input req, 		
+		input addr, 	
+		input cmd, 		
+		input wdata, 	
+		output ack, 	
+		output rdata
+	);
+	modport master (		
+		output req, 		
+		output addr, 	
+		output cmd, 		
+		output wdata, 	
+		input ack, 	
+		input rdata
+	);
+endinterface: bus	
 	
-	
-	
-	
-interface intf_2;
-		 wire 		sig1, sig3;
-		 var logic 	sig2, sig4;
-		 modport		a_ports (	input		sig1,
-										output	sig2);
-		 modport		b_ports 	(	input		sig3,
-										output	sig4);
-endinterface: intf_2
-	
-	
-	
-	
-module ip_crossbar_switch
 
+module ip_crossbar_switch
 #(
 	// Parameter Declarations
 	//parameter  = <default_value>	
 )
-
 (
-	// Master interface
-	input 										m_0_req,
-	input [address_width-1:0	]			m_0_addr,
-	input 										m_0_cmd,
-	input [data_width-1:0		]			m_0_wdata,
-	output								reg	m_0_ack,
-	output								reg	m_0_rdata
-	
-	// Slave interface
-	
-	
+	// i-faces for master connection have type "slave"
+	if_bus.slave m_0_bus ,
+	if_bus.slave m_1_bus,
+	if_bus.slave m_2_bus,
+	if_bus.slave m_3_bus,	
+	// i-faces for slave connection have type "master"
+	if_bus.master s_0_bus,
+	if_bus.master s_1_bus,
+	if_bus.master s_2_bus,
+	if_bus.master s_3_bus,
 );
 
 // Localparam
-localparam address_width	= 32;
-localparam data_width		= 32;
+localparam ADDRESS_WIDTH	= 32;
+localparam DATA_WIDTH		= 32;
 localparam MASTERS_COUNT	= 4;
+localparam SLAVES_COUNT		= 4;
 
 // Module Item(s)
-
 
 // vector of requests to slaves
 logic [MASTERS_COUNT-1:0]										m_req_vec	=	{m_3_req,m_2_req,m_1_req,m_0_req};
@@ -55,7 +60,7 @@ logic [MASTERS_COUNT-1:0][$clog2(SLAVES_COUNT)-1:0]	m_saddr_vec	=	{	m_3_addr[$cl
 																								m_0_addr[$clog2(SLAVES_COUNT)-1:0])};
 
 //triggers array of simultaneous access to specific slave 
-logic [$clog2(SLAVES_COUNT)-1:0]								sim_access;
+logic [$clog2(SLAVES_COUNT)-1:0]								simult_access;
 
 //counter of round robin turns
 logic	[$clog2(BUS_COUNT)-1:0]	rr_turn_counter;
@@ -64,10 +69,14 @@ logic	[$clog2(BUS_COUNT)-1:0]	rr_turn_counter;
 always @ (posedge clk )
 begin
 	if (reset)
-		sim_access 		=> 1'b0;
+		simult_access 		=> 1'b0;
 	else
-		sim_access		=>	|m_req_vec;
+		simult_access		=>	|m_req_vec;
 end
 
+always @( posedge clk )
+begin
+	
+end
 
 endmodule
