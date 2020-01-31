@@ -31,15 +31,15 @@ module ip_crossbar_switch
 )
 (
 	// i-faces for master connection have type "slave"
-	if_bus.slave m_0_bus ,
-	if_bus.slave m_1_bus,
-	if_bus.slave m_2_bus,
-	if_bus.slave m_3_bus,	
+	if_bus.slave m0bus ,
+	if_bus.slave m1bus,
+	if_bus.slave m2bus,
+	if_bus.slave m3bus,	
 	// i-faces for slave connection have type "master"
-	if_bus.master s_0_bus,
-	if_bus.master s_1_bus,
-	if_bus.master s_2_bus,
-	if_bus.master s_3_bus,
+	if_bus.master s0bus,
+	if_bus.master s1bus,
+	if_bus.master s2bus,
+	if_bus.master s3bus,
 );
 
 // Localparam
@@ -51,7 +51,7 @@ localparam SLAVES_COUNT		= 4;
 // Module Item(s)
 
 // vector of requests to slaves
-logic [MASTERS_COUNT-1:0]										m_req_vec	=	{m_3_req,m_2_req,m_1_req,m_0_req};
+logic [MASTERS_COUNT-1:0]										m_req_vec	=	{m3bus.req,m2bus.req,m1bus.req,m0bus.req};
 
 // array of slave addresses
 logic [MASTERS_COUNT-1:0][$clog2(SLAVES_COUNT)-1:0]	m_saddr_vec	=	{	m_3_addr[$clog2(SLAVES_COUNT)-1:0],
@@ -63,15 +63,25 @@ logic [MASTERS_COUNT-1:0][$clog2(SLAVES_COUNT)-1:0]	m_saddr_vec	=	{	m_3_addr[$cl
 logic [$clog2(SLAVES_COUNT)-1:0]								simult_access;
 
 //counter of round robin turns
-logic	[$clog2(BUS_COUNT)-1:0]	rr_turn_counter;
+logic	[$clog2(BUS_COUNT)-1:0]	rrs0_counter;
+logic	[$clog2(BUS_COUNT)-1:0]	rrs1_counter;
+logic	[$clog2(BUS_COUNT)-1:0]	rrs2_counter;
+logic	[$clog2(BUS_COUNT)-1:0]	rrs3_counter;
 
+s0bus.addr =	( rrs0_counter == 0 )	?	m0bus.addr :
+				( rrs0_counter == 1 )	?	m1bus.addr :
+				( rrs0_counter == 2 )	?	m2bus.addr :
+				//( rrs0_counter == 3 )	?	m3bus.addr :
+											m3bus.addr ;
+if 
 
+// simult_request
 always @ (posedge clk )
 begin
 	if (reset)
-		simult_access 		=> 1'b0;
+		simult_request 		=> 1'b0;
 	else
-		simult_access		=>	|m_req_vec;
+		simult_request		=>	|m_req_vec;
 end
 
 always @( posedge clk )
